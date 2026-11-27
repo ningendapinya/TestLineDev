@@ -2,60 +2,906 @@
 <html lang="th">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ลงทะเบียนผ่าน LINE</title>
-  <!-- เรียกใช้งาน LINE LIFF SDK -->
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <title>บันทึกรายจ่าย | Mine & Ning</title>
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,600;0,700;1,600&family=Prompt:wght@300;400;500;600&display=swap" rel="stylesheet">
+  
   <style>
-    body { font-family: sans-serif; text-align: center; padding: 30px; }
-    img { width: 100px; height: 100px; border-radius: 50%; margin-bottom: 15px; }
-    button { background: #06C755; color: white; border: none; padding: 12px 24px; font-size: 16px; border-radius: 8px; cursor: pointer; }
-    button:disabled { background: #ccc; }
+    :root {
+      --bg-cream: #FAF6F0;
+      --card-cream: #FFFDF9;
+      --border-sand: #E6DDD0;
+      --crimson-main: #8B2635;
+      --crimson-dark: #681824;
+      --crimson-soft: #F5E8EA;
+      --text-charcoal: #2C2523;
+      --text-muted: #857A75;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      background-color: var(--bg-cream);
+      color: var(--text-charcoal);
+      font-family: 'Prompt', sans-serif;
+      display: flex;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 20px 16px 96px 16px;
+    }
+
+    .app-container {
+      width: 100%;
+      max-width: 440px;
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+      padding-top: 8px;
+    }
+
+    .brand-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 28px;
+      font-weight: 700;
+      color: var(--crimson-main);
+      letter-spacing: -0.5px;
+    }
+
+    .brand-subtitle {
+      font-size: 12px;
+      color: var(--text-muted);
+      font-weight: 300;
+    }
+
+    .month-picker {
+      background: var(--card-cream);
+      border: 1px solid var(--border-sand);
+      color: var(--crimson-main);
+      font-family: 'Prompt', sans-serif;
+      font-size: 13px;
+      font-weight: 500;
+      padding: 8px 12px;
+      border-radius: 20px;
+      outline: none;
+      cursor: pointer;
+    }
+
+    .settlement-card {
+      background: linear-gradient(135deg, var(--crimson-main) 0%, var(--crimson-dark) 100%);
+      color: #FFFDF9;
+      border-radius: 24px;
+      padding: 24px;
+      box-shadow: 0 12px 28px rgba(139, 38, 53, 0.18);
+      margin-bottom: 20px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .settlement-card::after {
+      content: '';
+      position: absolute;
+      top: -40px;
+      right: -40px;
+      width: 130px;
+      height: 130px;
+      border-radius: 50%;
+      background: rgba(255, 253, 249, 0.06);
+    }
+
+    .settlement-label {
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      opacity: 0.85;
+      margin-bottom: 6px;
+    }
+
+    .settlement-status {
+      font-size: 15px;
+      font-weight: 400;
+      margin-bottom: 4px;
+      color: #F7D7DC;
+    }
+
+    .settlement-amount {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 42px;
+      font-weight: 700;
+      line-height: 1.1;
+      margin-bottom: 18px;
+    }
+
+    .stats-row {
+      display: flex;
+      justify-content: space-between;
+      border-top: 1px solid rgba(255, 253, 249, 0.15);
+      padding-top: 14px;
+      font-size: 12px;
+    }
+
+    .stat-box span {
+      display: block;
+      opacity: 0.75;
+      font-size: 11px;
+    }
+
+    .stat-box strong {
+      font-size: 14px;
+      font-weight: 500;
+    }
+
+    .filter-scroll {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      padding-bottom: 6px;
+      margin-bottom: 14px;
+      scrollbar-width: none;
+    }
+
+    .filter-scroll::-webkit-scrollbar {
+      display: none;
+    }
+
+    .filter-chip {
+      background: var(--card-cream);
+      border: 1px solid var(--border-sand);
+      color: var(--text-muted);
+      font-family: 'Prompt', sans-serif;
+      font-size: 12px;
+      padding: 6px 14px;
+      border-radius: 20px;
+      white-space: nowrap;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .filter-chip.active {
+      background: var(--crimson-main);
+      border-color: var(--crimson-main);
+      color: #FFFDF9;
+      font-weight: 500;
+    }
+
+    .section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin: 18px 0 10px 0;
+    }
+
+    .section-title {
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text-charcoal);
+    }
+
+    .total-badge {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .expense-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .expense-item {
+      background: var(--card-cream);
+      border: 1px solid var(--border-sand);
+      border-radius: 16px;
+      padding: 14px 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 10px;
+    }
+
+    .expense-left {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      flex: 1;
+    }
+
+    .expense-title-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .expense-title {
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text-charcoal);
+    }
+
+    .cat-tag {
+      font-size: 10px;
+      padding: 2px 8px;
+      border-radius: 8px;
+      background-color: #F3EDE4;
+      color: #6D5D53;
+      border: 1px solid #E5DDD0;
+    }
+
+    .expense-note {
+      font-size: 12px;
+      color: #6D5D53;
+      background-color: #F8F3EC;
+      padding: 5px 10px;
+      border-radius: 8px;
+      border-left: 2px solid var(--crimson-main);
+      line-height: 1.4;
+      margin-top: 2px;
+    }
+
+    .expense-meta {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      color: var(--text-muted);
+      flex-wrap: wrap;
+    }
+
+    .badge {
+      padding: 2px 8px;
+      border-radius: 10px;
+      font-size: 10px;
+      font-weight: 500;
+    }
+
+    .badge-me {
+      background-color: var(--crimson-soft);
+      color: var(--crimson-main);
+    }
+
+    .badge-partner {
+      background-color: #EFECE6;
+      color: #5C534E;
+    }
+
+    .expense-right {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding-top: 2px;
+    }
+
+    .expense-amount {
+      font-weight: 600;
+      font-size: 15px;
+      color: var(--crimson-main);
+      margin-right: 4px;
+    }
+
+    .btn-action {
+      background: none;
+      border: none;
+      color: #B8ACA4;
+      font-size: 16px;
+      cursor: pointer;
+      padding: 4px;
+      line-height: 1;
+    }
+
+    .btn-action:hover {
+      color: var(--crimson-main);
+    }
+
+    .fab {
+      position: fixed;
+      bottom: 24px;
+      right: 50%;
+      transform: translateX(50%);
+      background-color: var(--crimson-main);
+      color: #FFFDF9;
+      border: none;
+      border-radius: 30px;
+      padding: 14px 28px;
+      font-family: 'Prompt', sans-serif;
+      font-size: 14px;
+      font-weight: 500;
+      box-shadow: 0 8px 20px rgba(139, 38, 53, 0.3);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      z-index: 90;
+      transition: background 0.2s;
+    }
+
+    .fab:active {
+      background-color: var(--crimson-dark);
+      transform: translateX(50%) scale(0.97);
+    }
+
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(44, 37, 35, 0.45);
+      backdrop-filter: blur(3px);
+      display: none;
+      justify-content: center;
+      align-items: flex-end;
+      z-index: 100;
+    }
+
+    .modal-overlay.active {
+      display: flex;
+    }
+
+    .modal-sheet {
+      background: var(--bg-cream);
+      width: 100%;
+      max-width: 440px;
+      border-radius: 28px 28px 0 0;
+      padding: 26px 22px 34px 22px;
+      box-shadow: 0 -10px 30px rgba(0,0,0,0.1);
+      animation: slideUp 0.25s ease-out;
+      max-height: 92vh;
+      overflow-y: auto;
+    }
+
+    @keyframes slideUp {
+      from { transform: translateY(100%); }
+      to { transform: translateY(0); }
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 18px;
+    }
+
+    .modal-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 24px;
+      font-weight: 700;
+      color: var(--crimson-main);
+    }
+
+    .close-modal {
+      background: none;
+      border: none;
+      font-size: 24px;
+      color: var(--text-muted);
+      cursor: pointer;
+    }
+
+    .form-group {
+      margin-bottom: 14px;
+    }
+
+    .form-label {
+      display: block;
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+    }
+
+    .form-input {
+      width: 100%;
+      background: var(--card-cream);
+      border: 1px solid var(--border-sand);
+      border-radius: 14px;
+      padding: 11px 14px;
+      font-family: 'Prompt', sans-serif;
+      font-size: 14px;
+      color: var(--text-charcoal);
+      outline: none;
+    }
+
+    .form-input:focus {
+      border-color: var(--crimson-main);
+    }
+
+    .category-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .cat-option input {
+      display: none;
+    }
+
+    .cat-option label {
+      display: inline-block;
+      padding: 7px 13px;
+      background: var(--card-cream);
+      border: 1px solid var(--border-sand);
+      border-radius: 20px;
+      font-size: 12px;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .cat-option input:checked + label {
+      background: var(--crimson-main);
+      border-color: var(--crimson-main);
+      color: #FFFDF9;
+      font-weight: 500;
+    }
+
+    .segment-group {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .segment-option input {
+      display: none;
+    }
+
+    .segment-option label {
+      display: block;
+      text-align: center;
+      padding: 10px 8px;
+      background: var(--card-cream);
+      border: 1px solid var(--border-sand);
+      border-radius: 12px;
+      font-size: 12.5px;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .segment-option input:checked + label {
+      background: var(--crimson-soft);
+      border-color: var(--crimson-main);
+      color: var(--crimson-main);
+      font-weight: 500;
+    }
+
+    .btn-submit {
+      width: 100%;
+      background: var(--crimson-main);
+      color: #FFFDF9;
+      border: none;
+      border-radius: 16px;
+      padding: 14px;
+      font-family: 'Prompt', sans-serif;
+      font-size: 15px;
+      font-weight: 500;
+      margin-top: 8px;
+      cursor: pointer;
+    }
+
+    .btn-submit:disabled {
+      background: #B8ACA4;
+    }
+
+    .state-box {
+      text-align: center;
+      padding: 40px 20px;
+      color: var(--text-muted);
+      font-size: 13px;
+    }
   </style>
 </head>
 <body>
 
-  <img id="pictureUrl" src="https://via.placeholder.com/100" alt="Profile">
-  <h2 id="displayName">กำลังโหลดข้อมูล...</h2>
-  <button id="btnSave" onclick="sendData()" disabled>บันทึกข้อมูลลงระบบ</button>
+<div class="app-container">
+  <header>
+    <div>
+      <div class="brand-title">Mine & Ning</div>
+      <div class="brand-subtitle" id="welcomeText">บันทึกรายจ่ายประจำเดือนมายนิ้ง</div>
+    </div>
+    <input type="month" id="monthFilter" class="month-picker" onchange="loadData()">
+  </header>
 
-  <script>
-    const liffId = "2012806089-PjGK8mJR"; // นำ LIFF ID จากขั้นตอนที่ 3 มาใส่ตรงนี้
-    const gasUrl = "https://script.google.com/macros/s/AKfycbx_0z0Cl-m3C1iPaRto1HxaJCgUZctFa_KKjoCPsnk7L_p495nX8lYlusI8-TpfAr4C-Q/exec"; // นำ URL จากขั้นตอนที่ 1 มาใส่ตรงนี้
-    let userProfile = {};
+  <div class="settlement-card">
+    <div class="settlement-label">Monthly Settlement</div>
+    <div class="settlement-status" id="settlementText">กำลังคำนวณยอด...</div>
+    <div class="settlement-amount" id="settlementAmount">฿0.00</div>
+    
+    <div class="stats-row">
+      <div class="stat-box">
+        <span>มายจ่ายไป</span>
+        <strong id="mePaidVal">฿0</strong>
+      </div>
+      <div class="stat-box">
+        <span>นิ้งจ่ายไป</span>
+        <strong id="partnerPaidVal">฿0</strong>
+      </div>
+      <div class="stat-box">
+        <span>ใช้จ่ายรวมกัน</span>
+        <strong id="totalSpentVal">฿0</strong>
+      </div>
+    </div>
+  </div>
 
-    async function main() {
-      await liff.init({ liffId: liffId });
-      if (!liff.isLoggedIn()) {
-        liff.login(); // บังคับล็อกอินหากเปิดนอกแอป LINE
-      } else {
-        userProfile = await liff.getProfile();
-        document.getElementById("pictureUrl").src = userProfile.pictureUrl;
-        document.getElementById("displayName").innerText = userProfile.displayName;
-        document.getElementById("btnSave").disabled = false;
+  <div class="section-header">
+    <span class="section-title">รายการค่าใช้จ่าย</span>
+    <span class="total-badge" id="itemCount">0 รายการ</span>
+  </div>
+
+  <div class="filter-scroll" id="filterBar">
+    <button class="filter-chip active" onclick="setCategoryFilter('ทั้งหมด', this)">ทั้งหมด</button>
+    <button class="filter-chip" onclick="setCategoryFilter('ค่าอาหาร', this)">ค่าอาหาร</button>
+    <button class="filter-chip" onclick="setCategoryFilter('ค่าเดินทาง', this)">ค่าเดินทาง</button>
+    <button class="filter-chip" onclick="setCategoryFilter('ค่าของใช้', this)">ค่าของใช้</button>
+    <button class="filter-chip" onclick="setCategoryFilter('ของลูกชาย', this)">ของลูกชาย</button>
+    <button class="filter-chip" onclick="setCategoryFilter('ออกกำลังกาย', this)">ออกกำลังกาย</button>
+  </div>
+
+  <div id="expenseList" class="expense-list">
+    <div class="state-box">กำลังโหลดข้อมูล...</div>
+  </div>
+</div>
+
+<button class="fab" onclick="openModal()">+ เพิ่มรายการ</button>
+
+<div class="modal-overlay" id="expenseModal" onclick="closeModalOnOutside(event)">
+  <div class="modal-sheet">
+    <div class="modal-header">
+      <div class="modal-title">New Expense</div>
+      <button class="close-modal" onclick="closeModal()">&times;</button>
+    </div>
+
+    <form id="expenseForm" onsubmit="submitExpense(event)">
+      <input type="hidden" id="editId">
+
+      <div class="form-group">
+        <label class="form-label">หมวดหมู่</label>
+        <div class="category-grid">
+          <div class="cat-option">
+            <input type="radio" name="category" id="catFood" value="ค่าอาหาร" checked>
+            <label for="catFood">ค่าอาหาร</label>
+          </div>
+          <div class="cat-option">
+            <input type="radio" name="category" id="catTravel" value="ค่าเดินทาง">
+            <label for="catTravel">ค่าเดินทาง</label>
+          </div>
+          <div class="cat-option">
+            <input type="radio" name="category" id="catGoods" value="ค่าของใช้">
+            <label for="catGoods">ค่าของใช้</label>
+          </div>
+          <div class="cat-option">
+            <input type="radio" name="category" id="catSon" value="ของลูกชาย">
+            <label for="catSon">ของลูกชาย</label>
+          </div>
+          <div class="cat-option">
+            <input type="radio" name="category" id="catWorkout" value="ออกกำลังกาย">
+            <label for="catWorkout">ออกกำลังกาย</label>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">ชื่อรายการ</label>
+        <input type="text" id="title" class="form-input" placeholder="เช่น ไม้ถูพื้นห้องน้ำ, ข้าวเย็น..." required>
+      </div>
+
+      <div class="form-group" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+        <div>
+          <label class="form-label">จำนวนเงิน (บาท)</label>
+          <input type="number" id="amount" class="form-input" step="0.01" placeholder="0.00" required>
+        </div>
+        <div>
+          <label class="form-label">วันที่</label>
+          <input type="date" id="date" class="form-input" required>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">ใครเป็นคนออกเงินจ่ายไปก่อน?</label>
+        <div class="segment-group">
+          <div class="segment-option">
+            <input type="radio" name="paidBy" id="payMe" value="Me" checked>
+            <label for="payMe">มายจ่ายไปก่อน</label>
+          </div>
+          <div class="segment-option">
+            <input type="radio" name="paidBy" id="payPartner" value="Partner">
+            <label for="payPartner">นิ้งจ่ายไปก่อน</label>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">รูปแบบการคิดเงิน</label>
+        <div class="segment-group">
+          <div class="segment-option">
+            <input type="radio" name="splitType" id="splitHalf" value="50/50" checked>
+            <label for="splitHalf">หารครึ่ง (50/50)</label>
+          </div>
+          <div class="segment-option">
+            <input type="radio" name="splitType" id="splitFull" value="100%">
+            <label for="splitFull">ฝากซื้อ / จ่ายแทน 100%</label>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">โน้ตเพิ่มเติม (ไม่บังคับ)</label>
+        <input type="text" id="note" class="form-input" placeholder="เช่น มายซื้อให้">
+      </div>
+
+      <button type="submit" class="btn-submit" id="submitBtn">บันทึกรายการ</button>
+    </form>
+  </div>
+</div>
+
+<script>
+  const LIFF_ID = "2012806089-PjGK8mJR";
+  const GAS_URL = "https://script.google.com/macros/s/AKfycbx_0z0Cl-m3C1iPaRto1HxaJCgUZctFa_KKjoCPsnk7L_p495nX8lYlusI8-TpfAr4C-Q/exec";
+
+  let currentData = { expenses: [], summary: {} };
+  let activeCategory = 'ทั้งหมด';
+  let defaultPayer = 'Me';
+
+  window.onload = async function() {
+    const today = new Date();
+    const yyyy = today.getFullYear();
+    const mm = String(today.getMonth() + 1).padStart(2, '0');
+    const dd = String(today.getDate()).padStart(2, '0');
+    
+    document.getElementById('monthFilter').value = `${yyyy}-${mm}`;
+    document.getElementById('date').value = `${yyyy}-${mm}-${dd}`;
+    
+    // เริ่มต้นการทำงานของ LINE LIFF
+    try {
+      await liff.init({ liffId: LIFF_ID });
+      if (liff.isLoggedIn()) {
+        const profile = await liff.getProfile();
+        document.getElementById('welcomeText').innerText = `สวัสดีคุณ ${profile.displayName}`;
+        
+        // เช็กชื่อ LINE เพื่อตั้งค่าเริ่มต้นคนจ่ายให้อัตโนมัติ
+        const nameLower = profile.displayName.toLowerCase();
+        if (nameLower.includes('นิ้ง') || nameLower.includes('ning')) {
+          defaultPayer = 'Partner';
+        }
       }
+    } catch (err) {
+      console.log('LIFF Init Info:', err);
     }
 
-    async function sendData() {
-      document.getElementById("btnSave").innerText = "กำลังบันทึก...";
-      document.getElementById("btnSave").disabled = true;
+    loadData();
+  };
 
-      await fetch(gasUrl, {
-        method: "POST",
-        mode: "no-cors", // ป้องกันปัญหา CORS ของ Google Apps Script
-        headers: { "Content-Type": "application/json" },
+  function formatCurrency(num) {
+    return '฿' + Number(num || 0).toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+
+  async function loadData() {
+    const targetMonth = document.getElementById('monthFilter').value;
+    document.getElementById('expenseList').innerHTML = '<div class="state-box">กำลังอัปเดตข้อมูล...</div>';
+    
+    try {
+      const response = await fetch(`${GAS_URL}?month=${targetMonth}`);
+      const data = await response.json();
+      currentData = data;
+      renderUI();
+    } catch (err) {
+      document.getElementById('expenseList').innerHTML = '<div class="state-box">โหลดข้อมูลไม่สำเร็จ กรุณาลองใหม่อีกครั้ง</div>';
+      console.error(err);
+    }
+  }
+
+  function setCategoryFilter(category, btnEl) {
+    activeCategory = category;
+    document.querySelectorAll('.filter-chip').forEach(el => el.classList.remove('active'));
+    btnEl.classList.add('active');
+    renderExpenseList();
+  }
+
+  function renderUI() {
+    const { summary } = currentData;
+    
+    document.getElementById('mePaidVal').innerText = formatCurrency(summary.mePaid);
+    document.getElementById('partnerPaidVal').innerText = formatCurrency(summary.partnerPaid);
+    document.getElementById('totalSpentVal').innerText = formatCurrency(summary.totalSpent);
+
+    const net = summary.netBalance;
+    const statusEl = document.getElementById('settlementText');
+    const amountEl = document.getElementById('settlementAmount');
+
+    if (Math.abs(net) < 0.01) {
+      statusEl.innerText = 'ยอดลงตัวพอดี ไม่ต้องโอนคืนกัน';
+      amountEl.innerText = '฿0.00';
+    } else if (net > 0) {
+      statusEl.innerText = 'นิ้งต้องโอนคืนให้มาย';
+      amountEl.innerText = formatCurrency(net);
+    } else {
+      statusEl.innerText = 'มายต้องโอนคืนให้นิ้ง';
+      amountEl.innerText = formatCurrency(Math.abs(net));
+    }
+
+    renderExpenseList();
+  }
+
+  function renderExpenseList() {
+    const listEl = document.getElementById('expenseList');
+    
+    const filtered = activeCategory === 'ทั้งหมด' 
+      ? currentData.expenses 
+      : currentData.expenses.filter(item => item.category === activeCategory);
+
+    const filteredSum = filtered.reduce((acc, item) => acc + item.amount, 0);
+    document.getElementById('itemCount').innerText = activeCategory === 'ทั้งหมด'
+      ? `${filtered.length} รายการ`
+      : `${filtered.length} รายการ (${formatCurrency(filteredSum)})`;
+
+    if (filtered.length === 0) {
+      listEl.innerHTML = `<div class="state-box">ไม่มีรายการในหมวด "${activeCategory}"</div>`;
+      return;
+    }
+
+    listEl.innerHTML = filtered.map(item => {
+      const isMe = item.paidBy === 'Me';
+      const payerBadge = isMe 
+        ? `<span class="badge badge-me">มายจ่ายก่อน</span>` 
+        : `<span class="badge badge-partner">นิ้งจ่ายก่อน</span>`;
+      
+      let splitLabel = 'หารครึ่ง';
+      if (item.splitType === '100%') {
+        splitLabel = isMe ? 'นิ้งจ่าย 100% (ฝากซื้อ)' : 'มายจ่าย 100% (ฝากซื้อ)';
+      }
+
+      const noteHtml = item.note 
+        ? `<div class="expense-note">${item.note}</div>` 
+        : '';
+
+      return `
+        <div class="expense-item">
+          <div class="expense-left">
+            <div class="expense-title-row">
+              <span class="expense-title">${item.title}</span>
+              <span class="cat-tag">${item.category}</span>
+            </div>
+            <div class="expense-meta">
+              <span>${item.date}</span> • ${payerBadge} • <span>${splitLabel}</span>
+            </div>
+            ${noteHtml}
+          </div>
+          <div class="expense-right">
+            <div class="expense-amount">${formatCurrency(item.amount)}</div>
+            <button class="btn-action" onclick="editItem('${item.id}')" title="แก้ไข" style="font-size: 14px;">&#9998;</button>
+            <button class="btn-action" onclick="removeItem('${item.id}')" title="ลบ">&times;</button>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  function openModal() {
+    document.getElementById('editId').value = '';
+    document.querySelector('.modal-title').innerText = 'New Expense';
+    document.getElementById('submitBtn').innerText = 'บันทึกรายการ';
+    document.getElementById('title').value = '';
+    document.getElementById('amount').value = '';
+    document.getElementById('note').value = '';
+    
+    // ตั้งค่าเริ่มต้นคนจ่ายตามบัญชี LINE ที่เปิดใช้งาน
+    const paidRadio = document.querySelector(`input[name="paidBy"][value="${defaultPayer}"]`);
+    if (paidRadio) paidRadio.checked = true;
+
+    const today = new Date();
+    const yyyy = today.getFullYear();
+    const mm = String(today.getMonth() + 1).padStart(2, '0');
+    const dd = String(today.getDate()).padStart(2, '0');
+    document.getElementById('date').value = `${yyyy}-${mm}-${dd}`;
+    
+    document.getElementById('expenseModal').classList.add('active');
+  }
+
+  function editItem(id) {
+    const item = currentData.expenses.find(x => x.id === id);
+    if (!item) return;
+
+    document.getElementById('editId').value = item.id;
+    document.querySelector('.modal-title').innerText = 'Edit Expense';
+    document.getElementById('submitBtn').innerText = 'บันทึกการแก้ไข';
+
+    document.getElementById('title').value = item.title;
+    document.getElementById('amount').value = item.amount;
+    document.getElementById('date').value = item.rawDate;
+    document.getElementById('note').value = item.note || '';
+
+    const catRadio = document.querySelector(`input[name="category"][value="${item.category}"]`);
+    if (catRadio) catRadio.checked = true;
+
+    const paidRadio = document.querySelector(`input[name="paidBy"][value="${item.paidBy}"]`);
+    if (paidRadio) paidRadio.checked = true;
+
+    const splitRadio = document.querySelector(`input[name="splitType"][value="${item.splitType}"]`);
+    if (splitRadio) splitRadio.checked = true;
+
+    document.getElementById('expenseModal').classList.add('active');
+  }
+
+  async function submitExpense(e) {
+    e.preventDefault();
+    const btn = document.getElementById('submitBtn');
+    const editId = document.getElementById('editId').value;
+    
+    btn.disabled = true;
+    btn.innerText = 'กำลังบันทึก...';
+
+    const formData = {
+      id: editId,
+      category: document.querySelector('input[name="category"]:checked').value,
+      title: document.getElementById('title').value,
+      amount: document.getElementById('amount').value,
+      date: document.getElementById('date').value,
+      paidBy: document.querySelector('input[name="paidBy"]:checked').value,
+      splitType: document.querySelector('input[name="splitType"]:checked').value,
+      note: document.getElementById('note').value
+    };
+
+    document.getElementById('monthFilter').value = formData.date.substring(0, 7);
+
+    try {
+      const response = await fetch(GAS_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
         body: JSON.stringify({
-          userId: userProfile.userId,
-          displayName: userProfile.displayName,
-          pictureUrl: userProfile.pictureUrl
+          action: editId ? 'update' : 'add',
+          data: formData
         })
       });
-
-      alert("บันทึกข้อมูลเรียบร้อยแล้ว!");
-      liff.closeWindow(); // ปิดหน้าต่าง LIFF กลับเข้าห้องแชท
+      const data = await response.json();
+      currentData = data;
+      renderUI();
+      closeModal();
+    } catch (err) {
+      alert('บันทึกไม่สำเร็จ กรุณาลองใหม่อีกครั้ง');
+      console.error(err);
+    } finally {
+      btn.disabled = false;
     }
+  }
 
-    main();
-  </script>
+  async function removeItem(id) {
+    if (!confirm('ต้องการลบรายการนี้ใช่ไหม?')) return;
+    const targetMonth = document.getElementById('monthFilter').value;
+    document.getElementById('expenseList').innerHTML = '<div class="state-box">กำลังลบรายการ...</div>';
+
+    try {
+      const response = await fetch(GAS_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({
+          action: 'delete',
+          id: id,
+          targetMonth: targetMonth
+        })
+      });
+      const data = await response.json();
+      currentData = data;
+      renderUI();
+    } catch (err) {
+      alert('ลบรายการไม่สำเร็จ');
+      loadData();
+    }
+  }
+
+  function closeModal() {
+    document.getElementById('expenseModal').classList.remove('active');
+  }
+
+  function closeModalOnOutside(e) {
+    if (e.target.id === 'expenseModal') closeModal();
+  }
+</script>
+
 </body>
 </html>
